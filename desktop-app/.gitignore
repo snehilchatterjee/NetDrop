@@ -26,3 +26,6 @@ go.work.sum
 
 # custom folders
 temp/
+
+# custom files
+received_file*

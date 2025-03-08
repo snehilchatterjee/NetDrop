@@ -18,7 +18,7 @@ func main() {
 		val = strings.TrimSpace(val)
 
 		if val == "send" {
-			netutils.SendMessage(args[1])
+			netutils.SendMessage(args[1], args[2])
 		}
 	}
 
