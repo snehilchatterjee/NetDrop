@@ -1,11 +1,11 @@
 package netutils
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"net"
+	"os"
 )
 
 func StartListening(port string) {
@@ -30,21 +30,23 @@ func StartListening(port string) {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	buff := new(bytes.Buffer)
 	var size int64
 	binary.Read(conn, binary.LittleEndian, &size)
 
-	for {
-		_, err := io.CopyN(buff, conn, size)
-
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		fmt.Printf("Received: %s \n", buff.Bytes())
-		buff.Reset()
+	outFile, err := os.Create("received_file")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
 	}
+	defer outFile.Close()
+
+	written, err := io.CopyN(outFile, conn, size)
+	if err != nil {
+		fmt.Println("Error receiving file:", err)
+		return
+	}
+
+	fmt.Printf("File received successfully (%d bytes)\n", written)
 }
 
 func SendMessage(port string) {
@@ -54,18 +56,33 @@ func SendMessage(port string) {
 		fmt.Println(err)
 		return
 	}
-	file := []byte("Hello, server!")
-	// file := make([]byte, 4096)
-	size := len(file)
-	// size := 4096
-
-	binary.Write(conn, binary.LittleEndian, int64(size))
-	_, err = io.CopyN(conn, bytes.NewReader(file), int64(size))
-
+	file, err := os.Open("sample_file")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error opening file:", err)
 		return
 	}
+	defer file.Close()
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		fmt.Println("Error getting file info:", err)
+		return
+	}
+	fileSize := fileInfo.Size()
+
+	err = binary.Write(conn, binary.LittleEndian, fileSize)
+	if err != nil {
+		fmt.Println("Error sending file size:", err)
+		return
+	}
+
+	written, err := io.Copy(conn, file)
+	if err != nil {
+		fmt.Println("Error sending file:", err)
+		return
+	}
+
+	fmt.Printf("File sent successfully (%d bytes)\n", written)
 
 	defer conn.Close()
 	return
