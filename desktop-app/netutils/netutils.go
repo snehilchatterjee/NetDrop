@@ -1,7 +1,10 @@
 package netutils
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 )
 
@@ -27,14 +30,21 @@ func StartListening(port string) {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	buff := make([]byte, 1024)
-	_, err := conn.Read(buff)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	buff := new(bytes.Buffer)
+	var size int64
+	binary.Read(conn, binary.LittleEndian, &size)
 
-	fmt.Printf("Received: %s \n", buff)
+	for {
+		_, err := io.CopyN(buff, conn, size)
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Printf("Received: %s \n", buff.Bytes())
+		buff.Reset()
+	}
 }
 
 func SendMessage(port string) {
@@ -44,8 +54,14 @@ func SendMessage(port string) {
 		fmt.Println(err)
 		return
 	}
+	file := []byte("Hello, server!")
+	// file := make([]byte, 4096)
+	size := len(file)
+	// size := 4096
 
-	_, err = conn.Write([]byte("Hello, server!"))
+	binary.Write(conn, binary.LittleEndian, int64(size))
+	_, err = io.CopyN(conn, bytes.NewReader(file), int64(size))
+
 	if err != nil {
 		fmt.Println(err)
 		return
