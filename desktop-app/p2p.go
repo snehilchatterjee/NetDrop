@@ -14,16 +14,16 @@ import (
 )
 
 func main() {
-	args := os.Args[1:]
+	// args := os.Args[1:]
 
-	if len(args) < 2 {
-		log.Fatalf("Usage: go run p2p.go <listening port> <name of machine>")
-	}
+	// if len(args) < 2 {
+	// 	log.Fatalf("Usage: go run p2p.go <listening port> <name of machine>")
+	// }
 
-	port := args[0]
+	port := "8000"
 
-	_, err := os.Hostname()
-	name := args[1]
+	name, err := os.Hostname()
+	// name := args[1]
 
 	if err != nil {
 		log.Fatalf("Failed to get hostname: %v", err)
