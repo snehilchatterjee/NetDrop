@@ -74,8 +74,11 @@ func handleConnection(conn net.Conn) {
 	fmt.Printf("File received successfully: %s (%d bytes)\n", fileName, written)
 }
 
-func SendMessage(port string, filename string) {
-	conn, err := net.Dial("tcp", "localhost:"+port)
+func SendMessage(ip string, port string, filename string) {
+	ip_formatted := fmt.Sprintf("%s:%s", ip, port)
+	// fmt.Printf("IP: %s\nFileName: %s\n", ip_formatted, filename)
+
+	conn, err := net.Dial("tcp", ip_formatted)
 	if err != nil {
 		fmt.Println("Error connecting to server:", err)
 		return
